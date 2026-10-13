@@ -5,7 +5,7 @@
 <h1 align="center">Memora</h1>
 
 <p align="center">
-  Plataforma de estudos com repetição espaçada (SM-2) para fixar qualquer conteúdo de forma eficiente — questões, teoria, cadernos, estatísticas e revisão diária.
+  Plataforma de estudos com repetição espaçada baseada no algoritmo SM-2, projetada para otimizar a retenção de conhecimento. Organize questões, teoria e cadernos, acompanhe suas estatísticas e mantenha uma rotina de revisões diárias para aprender de forma eficiente.
 </p>
 
 ## Interface
