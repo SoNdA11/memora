@@ -16,12 +16,14 @@ export default function Logo({ size = 32, showText = true, className = '' }: Pro
         xmlns="http://www.w3.org/2000/svg"
       >
         <rect width="100" height="100" rx="22" fill="url(#logo-gradient)" />
-        <rect x="35" y="28" width="8" height="44" rx="4" fill="white" />
-        <rect x="35" y="60" width="28" height="8" rx="4" fill="white" />
+        <path d="M19 69 V33 L35 54 L51 33 V69" stroke="white" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" />
+        <rect x="60" y="53" width="7" height="16" rx="3.5" fill="white" opacity="0.55" />
+        <rect x="70" y="44" width="7" height="25" rx="3.5" fill="white" opacity="0.8" />
+        <rect x="80" y="34" width="7" height="35" rx="3.5" fill="white" />
         <defs>
           <linearGradient id="logo-gradient" x1="0" y1="0" x2="100" y2="100">
-            <stop offset="0%" stopColor="var(--apple-accent, #7c3aed)" />
-            <stop offset="100%" stopColor="#6d28d9" />
+            <stop offset="0%" stopColor="#8B5CF6" />
+            <stop offset="100%" stopColor="#6D28D9" />
           </linearGradient>
         </defs>
       </svg>

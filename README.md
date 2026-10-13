@@ -1,6 +1,12 @@
-# Memora
+<p align="center">
+  <img src="docs/logo.svg" width="120" alt="Memora">
+</p>
 
-Plataforma de estudos com repetição espaçada (SM-2) para fixar qualquer conteúdo de forma eficiente — questões, teoria, cadernos, estatísticas e revisão diária.
+<h1 align="center">Memora</h1>
+
+<p align="center">
+  Plataforma de estudos com repetição espaçada (SM-2) para fixar qualquer conteúdo de forma eficiente — questões, teoria, cadernos, estatísticas e revisão diária.
+</p>
 
 ## Interface
 

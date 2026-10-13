@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Memora">
+  <defs>
+    <linearGradient id="memora-g" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#6D28D9"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#memora-g)"/>
+  <path d="M96 352 V168 L176 276 L256 168 V352" fill="none" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="308" y="272" width="36" height="80" rx="18" fill="#FFFFFF" opacity="0.55"/>
+  <rect x="360" y="222" width="36" height="130" rx="18" fill="#FFFFFF" opacity="0.8"/>
+  <rect x="412" y="172" width="36" height="180" rx="18" fill="#FFFFFF"/>
+</svg>
