@@ -1,0 +1,16 @@
+[
+  {
+    "module": "Módulo de exemplo",
+    "title": "Módulo de exemplo",
+    "children": [
+      {
+        "subject": "Matéria de exemplo",
+        "title": "Matéria de exemplo",
+        "children": [
+          { "code": "1", "title": "Tópico de exemplo 1" },
+          { "code": "2", "title": "Tópico de exemplo 2" }
+        ]
+      }
+    ]
+  }
+]
