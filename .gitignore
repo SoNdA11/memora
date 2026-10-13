@@ -5,3 +5,7 @@ api/.env
 .env
 web/dist/
 .DS_Store
+# dumps de banco (dados pessoais de estudo nunca entram no git)
+*.sql
+*.dump
+*.backup
