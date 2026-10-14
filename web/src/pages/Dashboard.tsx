@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Flame, BookOpen, PlusCircle, BarChart3, ChevronRight,
   Target, Brain, Zap, TrendingUp, CheckCircle2, Timer,
-  ArrowRight, Sparkles,
+  ArrowRight, Sparkles, Layers,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { fetchStats, fetchDetailedStats, fetchExams } from '../api/client'
@@ -75,6 +75,8 @@ export default function Dashboard() {
 
   /* ── Stats ── */
   const todayPending   = stats?.pending_reviews  ?? 0
+  const pendingQuestions  = stats?.pending_questions  ?? 0
+  const pendingFlashcards = stats?.pending_flashcards ?? 0
   const todayDone      = stats?.today_reviews    ?? 0
   const totalQuestions = stats?.total_questions  ?? 0
   const totalReviews   = stats?.total_reviews    ?? 0
@@ -129,24 +131,45 @@ export default function Dashboard() {
             {streak > 0 ? `${streak} dias seguidos 🔥` : 'Bom estudo!'}
           </h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--lumi-text2)' }}>
-            {todayPending > 0
-              ? `${todayPending} ${todayPending === 1 ? 'questão pendente' : 'questões pendentes'} para hoje`
+            {(pendingQuestions > 0 || pendingFlashcards > 0)
+              ? [
+                  pendingQuestions > 0
+                    ? `${pendingQuestions} ${pendingQuestions === 1 ? 'questão pendente' : 'questões pendentes'}`
+                    : null,
+                  pendingFlashcards > 0
+                    ? `${pendingFlashcards} ${pendingFlashcards === 1 ? 'flashcard pendente' : 'flashcards pendentes'}`
+                    : null,
+                ].filter(Boolean).join(' + ') + ' para hoje'
               : todayDone > 0
               ? 'Você completou todas as revisões de hoje!'
               : 'Comece adicionando questões ao seu banco.'}
           </p>
         </div>
 
-        {/* CTA: review pending */}
-        {todayPending > 0 && (
-          <Link
-            to="/review"
-            className="btn btn-primary shrink-0 self-start"
-          >
-            <BookOpen size={14} />
-            Revisar {todayPending} {todayPending === 1 ? 'questão' : 'questões'}
-            <ArrowRight size={14} />
-          </Link>
+        {/* CTA: review pending — escolha entre questões e flashcards */}
+        {(pendingQuestions > 0 || pendingFlashcards > 0) && (
+          <div className="flex flex-wrap gap-2 shrink-0 self-start">
+            {pendingQuestions > 0 && (
+              <Link
+                to="/review"
+                className="btn btn-primary"
+              >
+                <BookOpen size={14} />
+                Revisar {pendingQuestions} {pendingQuestions === 1 ? 'questão' : 'questões'}
+                <ArrowRight size={14} />
+              </Link>
+            )}
+            {pendingFlashcards > 0 && (
+              <Link
+                to="/review/flashcards"
+                className="btn btn-secondary"
+              >
+                <Layers size={14} />
+                Flashcards ({pendingFlashcards})
+                <ArrowRight size={14} />
+              </Link>
+            )}
+          </div>
         )}
 
         {/* CTA: add first question */}
