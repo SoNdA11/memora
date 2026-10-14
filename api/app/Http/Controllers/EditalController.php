@@ -53,6 +53,46 @@ class EditalController extends Controller
         return response()->json(['nodes' => $nodes, 'edges' => $edges]);
     }
 
+    /**
+     * Subtópicos do edital agrupados por disciplina, para alimentar o seletor
+     * de tópico no formulário de questão (evita digitação manual).
+     *
+     * O agrupamento usa o `subject` do nó pai, porque os nós-folha (código)
+     * não repetem o nome da disciplina.
+     */
+    public function topics(): JsonResponse
+    {
+        $items = EditalItem::orderBy('id')->get();
+        $subjectById = [];
+
+        foreach ($items as $item) {
+            if ($item->subject) {
+                $subjectById[$item->id] = $item->subject;
+            }
+        }
+
+        $groups = [];
+        foreach ($items as $item) {
+            if (! $item->code) {
+                continue;
+            }
+
+            $subject = $subjectById[$item->parent_id] ?? 'Outros';
+            $groups[$subject][] = [
+                'code' => $item->code,
+                'title' => $item->title,
+                'value' => $item->code.' '.($item->title ?? ''),
+            ];
+        }
+
+        $out = [];
+        foreach ($groups as $subject => $topics) {
+            $out[] = ['subject' => $subject, 'topics' => $topics];
+        }
+
+        return response()->json($out);
+    }
+
     public function seed(): JsonResponse
     {
         if (app()->isProduction() && ! env('ALLOW_SEED')) {

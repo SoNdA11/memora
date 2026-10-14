@@ -17,6 +17,7 @@ import type {
   ExamDate,
   ExamAnalysis,
   KnowledgeGraph,
+  EditalTopicGroup,
   PhrasalVerbListResponse,
   PhrasalVerb,
   PhrasalReview,
@@ -320,6 +321,11 @@ export async function fetchEditalGraph(): Promise<KnowledgeGraph> {
 
 export async function seedEdital(): Promise<{ message: string }> {
   const { data } = await api.post('/api/edital/seed')
+  return data
+}
+
+export async function fetchEditalTopics(): Promise<EditalTopicGroup[]> {
+  const { data } = await api.get('/api/edital/topics')
   return data
 }
 

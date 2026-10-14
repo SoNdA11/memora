@@ -189,6 +189,17 @@ export interface GraphNode {
   theory_id?: number
 }
 
+export interface EditalTopic {
+  code: string
+  title: string
+  value: string
+}
+
+export interface EditalTopicGroup {
+  subject: string
+  topics: EditalTopic[]
+}
+
 export interface GraphEdge {
   source: string
   target: string

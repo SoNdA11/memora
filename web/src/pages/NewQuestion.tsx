@@ -2,11 +2,12 @@ import { useState, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { fetchSubjects, createQuestion, fetchTopics, fetchNotebooks } from '../api/client'
+import { fetchSubjects, createQuestion, fetchNotebooks } from '../api/client'
 import type { Alternative } from '../types'
 import { useToast } from '../contexts/ToastContext'
 import Button from '../components/Button'
 import PageHeader from '../components/PageHeader'
+import TopicSelect from '../components/TopicSelect'
 import { PlusCircle } from 'lucide-react'
 import { cleanPastedText, parseAlternatives } from '../utils'
 
@@ -18,7 +19,6 @@ export default function NewQuestion() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const { data: subjects } = useQuery({ queryKey: ['subjects'], queryFn: fetchSubjects })
-  const { data: topics } = useQuery({ queryKey: ['topics'], queryFn: fetchTopics })
   const { data: notebooks } = useQuery({ queryKey: ['notebooks'], queryFn: fetchNotebooks })
 
   const [subjectId, setSubjectId] = useState('')
@@ -105,7 +105,10 @@ export default function NewQuestion() {
             <label className="label">Matéria</label>
             <select
               value={subjectId}
-              onChange={(e) => setSubjectId(e.target.value)}
+              onChange={(e) => {
+                setSubjectId(e.target.value)
+                setTopic('')
+              }}
               required
               className="input"
             >
@@ -117,17 +120,11 @@ export default function NewQuestion() {
           </div>
           <div>
             <label className="label">Tópico</label>
-            <input
-              list="topics"
+            <TopicSelect
+              subjectName={subjects?.find((s) => String(s.id) === subjectId)?.name}
               value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              required
-              placeholder="ex: Direito Constitucional"
-              className="input"
+              onChange={setTopic}
             />
-            <datalist id="topics">
-              {topics?.map((t) => <option key={t} value={t} />)}
-            </datalist>
           </div>
         </div>
 

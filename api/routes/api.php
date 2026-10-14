@@ -75,6 +75,7 @@ Route::middleware('throttle:120,1')->group(function () {
     Route::patch('/theory/{theory}/current', [TheoryController::class, 'toggleCurrent']);
 
     Route::get('/edital/graph', [EditalController::class, 'graph']);
+    Route::get('/edital/topics', [EditalController::class, 'topics']);
     Route::post('/edital/link', [EditalController::class, 'link']);
     Route::delete('/edital/link', [EditalController::class, 'unlink']);
 
