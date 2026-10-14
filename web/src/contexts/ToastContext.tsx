@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useRef, useEffect, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, XCircle, AlertCircle, X } from 'lucide-react'
 
@@ -20,11 +20,21 @@ let nextId = 0
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
+  const timeouts = useRef<number[]>([])
 
   const addToast = useCallback((type: ToastType, message: string) => {
     const id = nextId++
     setToasts((prev) => [...prev, { id, type, message }])
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500)
+    const timeoutId = window.setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500)
+    timeouts.current.push(timeoutId)
+  }, [])
+
+  useEffect(() => {
+    const ids = timeouts.current
+    return () => {
+      ids.forEach((t) => clearTimeout(t))
+      timeouts.current = []
+    }
   }, [])
 
   const remove = (id: number) => setToasts((prev) => prev.filter((t) => t.id !== id))
@@ -40,7 +50,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast: addToast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm">
+      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm" role="status" aria-live="polite">
         <AnimatePresence>
           {toasts.map((t) => (
             <motion.div
@@ -53,7 +63,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             >
               {icon(t.type)}
               <span className="flex-1 text-apple-text">{t.message}</span>
-              <button onClick={() => remove(t.id)} className="p-0.5 text-apple-text-secondary hover:text-apple-text transition-colors">
+              <button onClick={() => remove(t.id)} className="p-0.5 text-apple-text-secondary hover:text-apple-text transition-colors" aria-label="Fechar notificação">
                 <X size={14} />
               </button>
             </motion.div>

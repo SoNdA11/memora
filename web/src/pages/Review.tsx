@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fetchTodayReviews, submitReview } from '../api/client'
+import { safeParseArray } from '../utils/safeJson'
 import { CheckCircle, XCircle, ChevronRight, SkipForward, Check, X, BookOpen, ArrowRight } from 'lucide-react'
 import MarkdownContent from '../components/MarkdownContent'
 import { ReviewSkeleton } from '../components/Skeleton'
@@ -86,9 +87,11 @@ export default function Review() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
       if (!reviews) return
       const question = reviews[currentIndex].question
-      const alternatives = JSON.parse(question.alternatives || '[]')
+      const alternatives = safeParseArray<{ letter: string }>(question.alternatives)
       if (!answered) {
         const key = e.key.toUpperCase()
         if (key === 'S') { e.preventDefault(); handleSkip(); return }
@@ -195,7 +198,7 @@ export default function Review() {
   /* ── Active review session ── */
   const review = reviews[currentIndex]
   const question = review.question
-  const alternatives = JSON.parse(question.alternatives || '[]')
+  const alternatives = safeParseArray<{ letter: string; text: string }>(question.alternatives)
   const progress = ((currentIndex + 1) / reviews.length) * 100
 
   return (

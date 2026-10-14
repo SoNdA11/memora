@@ -11,6 +11,7 @@ import MarkdownContent from '../components/MarkdownContent'
 import Button from '../components/Button'
 import { useConfirm } from '../contexts/ConfirmContext'
 import { useToast } from '../contexts/ToastContext'
+import { safeParseArray, safeParseStringArray } from '../utils/safeJson'
 
 export default function QuestionDetail() {
   const { id } = useParams<{ id: string }>()
@@ -56,8 +57,8 @@ export default function QuestionDetail() {
   if (!data) return <p className="text-apple-text-secondary">Questão não encontrada.</p>
 
   const { question, review } = data
-  const alternatives = JSON.parse(question.alternatives || '[]')
-  const tags = JSON.parse(question.tags || '[]')
+  const alternatives = safeParseArray<{ letter: string; text: string }>(question.alternatives)
+  const tags = safeParseStringArray(question.tags)
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto">

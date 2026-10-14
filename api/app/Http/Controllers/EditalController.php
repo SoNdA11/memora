@@ -55,6 +55,10 @@ class EditalController extends Controller
 
     public function seed(): JsonResponse
     {
+        if (app()->isProduction() && ! env('ALLOW_SEED')) {
+            return response()->json(['error' => 'seed desabilitado em produção'], 403);
+        }
+
         $tree = $this->buildTree();
         if (! $tree) {
             return response()->json(['message' => 'Nenhum edital local configurado (database/data/edital.json)'], 422);
@@ -81,7 +85,7 @@ class EditalController extends Controller
             'theory_id' => 'required|integer|exists:theory_entries,id',
         ]);
 
-        EditalItem::find($data['edital_id'])->theories()->syncWithoutDetaching([$data['theory_id']]);
+        EditalItem::findOrFail($data['edital_id'])->theories()->syncWithoutDetaching([$data['theory_id']]);
 
         return response()->json(['message' => 'vinculado']);
     }
@@ -93,7 +97,7 @@ class EditalController extends Controller
             'theory_id' => 'required|integer|exists:theory_entries,id',
         ]);
 
-        EditalItem::find($data['edital_id'])->theories()->detach($data['theory_id']);
+        EditalItem::findOrFail($data['edital_id'])->theories()->detach($data['theory_id']);
 
         return response()->json(['message' => 'desvinculado']);
     }

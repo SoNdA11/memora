@@ -9,17 +9,41 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType>({ theme: 'light', toggle: () => {} })
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
+function getInitialTheme(): Theme {
+  try {
     const stored = localStorage.getItem('memora-theme')
     if (stored === 'dark' || stored === 'light') return stored
+  } catch {
+    // localStorage unavailable (e.g. private mode) — fall through to media query
+  }
+  try {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  })
+  } catch {
+    return 'light'
+  }
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(getInitialTheme)
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
-    localStorage.setItem('memora-theme', theme)
+    try {
+      localStorage.setItem('memora-theme', theme)
+    } catch {
+      // ignore write failures (quota / private mode)
+    }
   }, [theme])
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'memora-theme' && (e.newValue === 'dark' || e.newValue === 'light')) {
+        setTheme(e.newValue)
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
 
   const toggle = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'))
 

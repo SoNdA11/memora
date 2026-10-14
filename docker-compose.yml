@@ -2,17 +2,22 @@ services:
   pgsql:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: memora
-      POSTGRES_USER: memora
-      POSTGRES_PASSWORD: memora
+      POSTGRES_DB: '${POSTGRES_DB:-memora}'
+      POSTGRES_USER: '${POSTGRES_USER:-memora}'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD:-memora}'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U memora -d memora']
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-memora} -d $${POSTGRES_DB:-memora}']
       interval: 5s
       timeout: 5s
       retries: 10
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
     image: redis:7-alpine
@@ -24,6 +29,11 @@ services:
       timeout: 5s
       retries: 10
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   api:
     build:
@@ -33,13 +43,14 @@ services:
     environment:
       APP_ENV: production
       APP_DEBUG: 'false'
+      # DEV ONLY: default só para `make up` local. Em produção exporte APP_KEY real (ver .env.example).
       APP_KEY: '${APP_KEY:-base64:tUr6OU8s1gqwZ9CP/7It/zMh+cAUbO2duMumgshE5To=}'
       DB_CONNECTION: pgsql
       DB_HOST: pgsql
       DB_PORT: '5432'
-      DB_DATABASE: memora
-      DB_USERNAME: memora
-      DB_PASSWORD: memora
+      DB_DATABASE: '${POSTGRES_DB:-memora}'
+      DB_USERNAME: '${POSTGRES_USER:-memora}'
+      DB_PASSWORD: '${POSTGRES_PASSWORD:-memora}'
       CACHE_STORE: redis
       REDIS_HOST: redis
       REDIS_PORT: '6379'
@@ -57,6 +68,59 @@ services:
       retries: 5
       start_period: 30s
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  queue:
+    build:
+      context: ./api
+    command: php artisan queue:work --sleep=3 --tries=3
+    environment:
+      APP_ENV: production
+      APP_DEBUG: 'false'
+      APP_KEY: '${APP_KEY:-base64:tUr6OU8s1gqwZ9CP/7It/zMh+cAUbO2duMumgshE5To=}'
+      DB_CONNECTION: pgsql
+      DB_HOST: pgsql
+      DB_PORT: '5432'
+      DB_DATABASE: '${POSTGRES_DB:-memora}'
+      DB_USERNAME: '${POSTGRES_USER:-memora}'
+      DB_PASSWORD: '${POSTGRES_PASSWORD:-memora}'
+      CACHE_STORE: redis
+      REDIS_HOST: redis
+      REDIS_PORT: '6379'
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+    depends_on:
+      pgsql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backup:
+    image: postgres:16-alpine
+    command: sh -c "while true; do pg_dump -U memora -h pgsql memora > /backups/dump-$$(date +%F_%H%M).sql; sleep 86400; done"
+    environment:
+      PGPASSWORD: '${POSTGRES_PASSWORD:-memora}'
+    volumes:
+      - pgbackups:/backups
+    depends_on:
+      pgsql:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   web:
     build:
@@ -75,7 +139,13 @@ services:
       retries: 5
       start_period: 20s
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   pgdata:
   redisdata:
+  pgbackups:

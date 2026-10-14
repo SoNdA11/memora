@@ -38,8 +38,8 @@ class ReviewController extends Controller
     {
         $data = $request->validate([
             'correct' => 'required|boolean',
-            'selected_answer' => 'nullable|string',
-            'time_spent' => 'nullable|integer|min:0',
+            'selected_answer' => 'nullable|string|max:5',
+            'time_spent' => 'nullable|integer|min:0|max:86400',
         ]);
 
         $review = Review::where('question_id', $question->id)->first();

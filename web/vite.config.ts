@@ -19,4 +19,19 @@ export default defineConfig({
       usePolling: true,
     },
   },
+  build: {
+    chunkSizeWarningLimit: 800,
+    sourcemap: false,
+    cssMinify: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          query: ['@tanstack/react-query', 'axios'],
+          charts: ['recharts'],
+          md: ['react-markdown', 'remark-gfm', 'rehype-raw'],
+        },
+      },
+    },
+  },
 })

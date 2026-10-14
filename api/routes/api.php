@@ -11,9 +11,18 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TheoryController;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok']));
+Route::get('/health', function () {
+    try {
+        DB::select('select 1');
+
+        return response()->json(['status' => 'ok', 'db' => 'up']);
+    } catch (\Throwable) {
+        return response()->json(['status' => 'ok', 'db' => 'fail'], 503);
+    }
+});
 
 Route::middleware('throttle:120,1')->group(function () {
     Route::get('/subjects', [SubjectController::class, 'index']);

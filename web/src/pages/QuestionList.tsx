@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -17,6 +17,7 @@ export default function QuestionList() {
   const queryClient = useQueryClient()
   const { confirm } = useConfirm()
   const { toast } = useToast()
+  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [subjectFilter, setSubjectFilter] = useState('')
   const [sourceFilter, setSourceFilter] = useState('')
@@ -26,9 +27,17 @@ export default function QuestionList() {
   const [page, setPage] = useState(1)
   const [showFilters, setShowFilters] = useState(false)
 
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput)
+      setPage(1)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
   const { data: subjects } = useQuery({ queryKey: ['subjects'], queryFn: fetchSubjects })
   const { data: notebooks } = useQuery({ queryKey: ['notebooks'], queryFn: fetchNotebooks })
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['questions', search, subjectFilter, sourceFilter, tagFilter, favoriteFilter, notebookFilter, page],
     queryFn: () => fetchQuestions({
       search,
@@ -40,6 +49,7 @@ export default function QuestionList() {
       page,
       limit: 15,
     }),
+    staleTime: 15000,
   })
 
   const deleteMutation = useMutation({
@@ -60,6 +70,7 @@ export default function QuestionList() {
   })
 
   const clearFilters = () => {
+    setSearchInput('')
     setSearch('')
     setSubjectFilter('')
     setSourceFilter('')
@@ -69,7 +80,7 @@ export default function QuestionList() {
     setPage(1)
   }
 
-  const hasFilters = search || subjectFilter || sourceFilter || tagFilter || favoriteFilter || notebookFilter
+  const hasFilters = searchInput || search || subjectFilter || sourceFilter || tagFilter || favoriteFilter || notebookFilter
   const activeFilterCount = [subjectFilter, sourceFilter, tagFilter, favoriteFilter, notebookFilter].filter(Boolean).length
 
   return (
@@ -96,17 +107,19 @@ export default function QuestionList() {
             style={{ color: 'var(--lumi-text3)' }}
           />
           <input
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            value={searchInput}
+            onChange={(e) => { setSearchInput(e.target.value) }}
             placeholder="Buscar questões por texto, tópico ou fonte..."
             className="input pl-9"
             style={{ height: '38px' }}
+            aria-label="Buscar questões"
           />
-          {search && (
+          {searchInput && (
             <button
-              onClick={() => setSearch('')}
+              onClick={() => { setSearchInput(''); setSearch(''); setPage(1) }}
               className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded transition-colors"
               style={{ color: 'var(--lumi-text3)' }}
+              aria-label="Limpar busca"
             >
               <X size={13} />
             </button>
@@ -198,6 +211,7 @@ export default function QuestionList() {
               onClick={clearFilters}
               className="flex items-center gap-1 px-3 rounded-lg text-[12px] font-medium transition-colors"
               style={{ color: 'var(--lumi-danger)', backgroundColor: 'var(--lumi-danger-bg)' }}
+              aria-label="Limpar filtros"
             >
               <X size={12} /> Limpar filtros
             </button>
@@ -208,6 +222,11 @@ export default function QuestionList() {
       {/* ── Results ── */}
       {isLoading ? (
         <ListSkeleton />
+      ) : isError ? (
+        <div className="card p-6 text-center space-y-3">
+          <p className="text-sm" style={{ color: 'var(--lumi-danger)' }}>Erro ao carregar questões.</p>
+          <Button variant="secondary" size="sm" onClick={() => refetch()}>Tentar novamente</Button>
+        </div>
       ) : (
         <>
           {data?.data.length === 0 ? (
@@ -290,10 +309,11 @@ export default function QuestionList() {
                         className="btn-icon"
                         style={{ color: q.favorite ? 'var(--lumi-warning)' : undefined }}
                         title={q.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                        aria-label={q.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
                       >
                         <Star size={14} fill={q.favorite ? 'currentColor' : 'none'} />
                       </button>
-                      <Link to={`/questions/${q.id}`} className="btn-icon" title="Abrir questão">
+                      <Link to={`/questions/${q.id}`} className="btn-icon" title="Abrir questão" aria-label="Abrir questão">
                         <ExternalLink size={14} />
                       </Link>
                       <button
@@ -306,6 +326,7 @@ export default function QuestionList() {
                         onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--lumi-danger)' }}
                         onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--lumi-text3)' }}
                         title="Excluir questão"
+                        aria-label="Excluir questão"
                       >
                         <Trash2 size={14} />
                       </button>

@@ -5,6 +5,7 @@ import { CheckCircle, XCircle, ChevronRight, SkipForward, Check, X, ArrowLeft, S
 import { ListSkeleton } from '../components/Skeleton'
 import { useToast } from '../contexts/ToastContext'
 import MarkdownContent from '../components/MarkdownContent'
+import { safeParseArray } from '../utils/safeJson'
 
 export default function ReviewBySubject() {
   const queryClient = useQueryClient()
@@ -88,9 +89,11 @@ export default function ReviewBySubject() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
       if (!questions || !started) return
       const q = questions[currentIndex]
-      const alternatives = JSON.parse(q.alternatives || '[]')
+      const alternatives = safeParseArray<{ letter: string }>(q.alternatives)
 
       if (!answered) {
         const key = e.key.toUpperCase()
@@ -223,7 +226,7 @@ export default function ReviewBySubject() {
   }
 
   const question = questions[currentIndex]
-  const alternatives = JSON.parse(question.alternatives || '[]')
+  const alternatives = safeParseArray<{ letter: string; text: string }>(question.alternatives)
 
   return (
     <div className="max-w-2xl mx-auto">

@@ -10,6 +10,7 @@ import Button from '../components/Button'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import MarkdownContent from '../components/MarkdownContent'
+import { safeParseArray } from '../utils/safeJson'
 
 export default function NotebookDetail() {
   const { id } = useParams<{ id: string }>()
@@ -95,9 +96,11 @@ export default function NotebookDetail() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
       if (!questions || !started) return
       const q = questions[currentIndex]
-      const alternatives = JSON.parse(q.alternatives || '[]')
+      const alternatives = safeParseArray<{ letter: string }>(q.alternatives)
 
       if (!answered) {
         const key = e.key.toUpperCase()
@@ -201,7 +204,7 @@ export default function NotebookDetail() {
     }
 
     const question = questions[currentIndex]
-    const alternatives = JSON.parse(question.alternatives || '[]')
+    const alternatives = safeParseArray<{ letter: string; text: string }>(question.alternatives)
 
     return (
       <div className="max-w-2xl mx-auto">
@@ -487,7 +490,7 @@ export default function NotebookDetail() {
           </p>
         )}
         {filteredQuestions.map((q) => {
-          const alt = JSON.parse(q.alternatives || '[]')
+          const alt = safeParseArray<{ letter: string; text: string }>(q.alternatives)
           return (
             <div key={q.id} className="card p-4">
               <div className="flex items-start justify-between gap-4">

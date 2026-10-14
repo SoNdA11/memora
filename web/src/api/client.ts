@@ -24,11 +24,27 @@ import type {
   AnkiRating,
 } from '../types'
 
+function resolveBaseURL(): string {
+  const v = import.meta.env.VITE_API_URL
+  if (typeof v === 'string' && v.trim() !== '') return v
+  if (v === '') return ''
+  return 'http://localhost:8080'
+}
+
 const api = axios.create({
   // '' (string vazia) = mesma origem, usa o proxy /api/ do nginx em prod.
   // undefined (dev sem VITE_API_URL) = fallback para a API local.
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8080',
+  baseURL: resolveBaseURL(),
+  timeout: 15000,
 })
+
+api.interceptors.response.use(
+  (r) => r,
+  (e) => {
+    if (e.code === 'ECONNABORTED') console.warn('API timeout')
+    return Promise.reject(e)
+  }
+)
 
 export async function fetchSubjects(): Promise<Subject[]> {
   const { data } = await api.get('/api/subjects')
@@ -232,8 +248,8 @@ export async function seedTheory(path?: string): Promise<{ message: string; crea
 }
 
 export function exportTheoryPDF(id: number): void {
-  const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
-  window.open(`${baseURL}/api/theory/${id}/pdf`, '_blank')
+  const base = resolveBaseURL() || window.location.origin
+  window.open(`${base}/api/theory/${id}/pdf`, '_blank', 'noopener,noreferrer')
 }
 
 export async function fetchAnnotations(questionId: number): Promise<Annotation[]> {

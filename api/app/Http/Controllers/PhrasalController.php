@@ -43,6 +43,10 @@ class PhrasalController extends Controller
 
     public function seed(): JsonResponse
     {
+        if (app()->isProduction() && ! env('ALLOW_SEED')) {
+            return response()->json(['error' => 'seed desabilitado em produção'], 403);
+        }
+
         $seeds = PhrasalSeeds::all();
         $created = 0;
         $skipped = 0;

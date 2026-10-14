@@ -19,10 +19,11 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts
 
 COPY . .
-RUN [ -f .env ] || cp .env.example .env
+# Não bake .env nem APP_KEY na imagem: segredos vêm do ambiente em runtime.
 RUN composer dump-autoload --optimize \
-    && php artisan key:generate --force --no-interaction 2>/dev/null || true \
     && chown -R www-data:www-data storage bootstrap/cache
+
+USER www-data
 
 EXPOSE 8080
 
@@ -31,4 +32,5 @@ HEALTHCHECK --interval=15s --timeout=5s --retries=5 --start-period=30s \
 
 # Roda o servidor web embutido diretamente (sem intermediário) para que o
 # processo herde 100% das variáveis de ambiente do container (DB_HOST, etc).
-CMD ["sh", "-c", "php artisan migrate --force && php -S 0.0.0.0:8080 -t public"]
+# TODO prod: trocar php -S por FrankenPHP/octane
+CMD ["sh", "-c", "php artisan migrate --force --no-interaction && exec php -S 0.0.0.0:8080 -t public"]

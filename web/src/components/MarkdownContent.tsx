@@ -1,6 +1,7 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
+import rehypeSanitize from 'rehype-sanitize'
 
 const MATH_REPLACEMENTS: [RegExp, string][] = [
   [/\\rightarrow/g, '→'],
@@ -105,6 +106,8 @@ export default function MarkdownContent({ content }: { content: string }) {
 
   return (
     <>
+      {/* NOTE: inline <style> kept intentionally for scoped math styles.
+          Prefer moving to a CSS file (e.g. MarkdownContent.css) if this grows. */}
       <style>{`
         .math-inline {
           font-family: 'Times New Roman', serif;
@@ -138,13 +141,17 @@ export default function MarkdownContent({ content }: { content: string }) {
       } as React.CSSProperties}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
+        rehypePlugins={[rehypeRaw, rehypeSanitize]}
         components={{
-          a: ({ href, children, ...props }) => (
-            <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
-              {children}
-            </a>
-          ),
+          a: ({ href, children, ...props }) => {
+            const isSafe = !href || /^(https?:|mailto:|#|\/)/i.test(href)
+            if (!isSafe) return <span>{children}</span>
+            return (
+              <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+                {children}
+              </a>
+            )
+          },
           table: ({ children }) => (
             <div className="overflow-x-auto rounded-lg border border-apple-border">
               <table className="min-w-full text-sm">{children}</table>
@@ -160,9 +167,14 @@ export default function MarkdownContent({ content }: { content: string }) {
               {children}
             </td>
           ),
-          img: ({ src, alt }) => (
-            <img src={src} alt={alt || ''} className="rounded-lg max-w-full h-auto" loading="lazy" />
-          ),
+          img: ({ src, alt }) => {
+            if (!src || /^(javascript:|data:text)/i.test(src)) return <span>{alt || ''}</span>
+            // Only allow http/https, data:image, or relative URLs
+            if (!/^(https?:|data:image|\/|#)/i.test(src) && !/^[^:/?#]+(?:[/?#]|$)/.test(src)) {
+              return <span>{alt || ''}</span>
+            }
+            return <img src={src} alt={alt || ''} className="rounded-lg max-w-full h-auto" loading="lazy" />
+          },
           blockquote: ({ children }) => (
             <blockquote className="border-l-4 border-apple-accent/30 bg-apple-accent/5 pl-4 pr-4 py-2 rounded-r-lg italic not-italic">
               {children}

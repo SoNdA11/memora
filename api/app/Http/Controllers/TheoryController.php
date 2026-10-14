@@ -21,6 +21,7 @@ class TheoryController extends Controller
             $query->where('subject_id', $s);
         }
         if ($s = $request->query('search')) {
+            $s = addcslashes($s, '%_\\');
             $query->where(fn ($q) => $q->where('title', 'ilike', "%{$s}%")->orWhere('topic', 'ilike', "%{$s}%"));
         }
         if ($request->query('current') === 'true') {
@@ -54,7 +55,7 @@ class TheoryController extends Controller
             TheoryEntry::with('subject')
                 ->where('subject_id', $subject->id)
                 ->orderBy('topic')->orderBy('title')
-                ->limit(2000)
+                ->limit(500)
                 ->get()
         );
     }
@@ -67,13 +68,13 @@ class TheoryController extends Controller
     public function store(Request $request, Subject $subject): JsonResponse
     {
         $data = $request->validate([
-            'topic' => 'required|string',
-            'title' => 'required|string',
-            'content' => 'required|string',
-            'source' => 'nullable|string',
+            'topic' => 'required|string|max:255',
+            'title' => 'required|string|max:255',
+            'content' => 'required|string|max:100000',
+            'source' => 'nullable|string|max:2048',
             'tags' => 'sometimes|array',
             'tags.*' => 'string',
-            'notebooklm_url' => 'nullable|string',
+            'notebooklm_url' => 'nullable|url|max:2048',
         ]);
 
         $entry = TheoryEntry::create([
@@ -153,9 +154,13 @@ class TheoryController extends Controller
 
     public function seed(Request $request): JsonResponse
     {
-        $basePath = $request->query('path', '/app/estudos');
+        if (app()->isProduction() && ! env('ALLOW_SEED')) {
+            return response()->json(['error' => 'seed desabilitado em produção'], 403);
+        }
+
+        $basePath = '/app/estudos';
         if (! is_dir($basePath)) {
-            return response()->json(['error' => 'diretório estudos não encontrado: '.$basePath], 500);
+            return response()->json(['error' => 'diretório estudos não encontrado: '.$basePath], 404);
         }
 
         $created = 0;
@@ -229,19 +234,40 @@ class TheoryController extends Controller
     /** @return array{0: Subject, 1: bool} */
     private function findOrCreateSubject(string $name): array
     {
+        static $cache = [];
+
+        if (isset($cache[$name])) {
+            return [$cache[$name], false];
+        }
+
         $subject = Subject::where('name', $name)->first();
         if ($subject) {
+            $cache[$name] = $subject;
+
             return [$subject, false];
         }
 
         $normalized = TextHelper::normalizeForMatch($name);
-        foreach (Subject::all() as $s) {
+        foreach (array_values($cache) as $cached) {
+            if (TextHelper::normalizeForMatch($cached->name) === $normalized) {
+                $cache[$name] = $cached;
+
+                return [$cached, false];
+            }
+        }
+
+        foreach (Subject::limit(500)->get() as $s) {
             if (TextHelper::normalizeForMatch($s->name) === $normalized) {
+                $cache[$name] = $s;
+
                 return [$s, false];
             }
         }
 
-        return [Subject::create(['name' => $name]), true];
+        $created = Subject::create(['name' => $name]);
+        $cache[$name] = $created;
+
+        return [$created, true];
     }
 
     private function migrateLegacyTheory(Subject $subject, string $category): void

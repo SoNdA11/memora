@@ -18,18 +18,23 @@ class QuestionController extends Controller
         $query = Question::with(['subject', 'notebooks']);
 
         if ($s = $request->query('search')) {
+            $s = addcslashes($s, '%_\\');
             $query->where(fn ($q) => $q->where('text', 'ilike', "%{$s}%")->orWhere('topic', 'ilike', "%{$s}%"));
         }
         if ($subjectId = $request->query('subject_id')) {
             $query->where('subject_id', $subjectId);
         }
         if ($topic = $request->query('topic')) {
+            $topic = addcslashes($topic, '%_\\');
             $query->where('topic', 'ilike', "%{$topic}%");
         }
         if ($source = $request->query('source')) {
+            $source = addcslashes($source, '%_\\');
             $query->where('source', 'ilike', "%{$source}%");
         }
         if ($tag = $request->query('tag')) {
+            $tag = substr((string) $tag, 0, 64);
+            $tag = str_replace(['"', '\\'], '', $tag);
             $query->where('tags', 'like', '%"'.$tag.'"%');
         }
         if ($request->query('favorite') === 'true') {
@@ -68,17 +73,17 @@ class QuestionController extends Controller
     {
         $data = $request->validate([
             'subject_id' => 'required|integer|exists:subjects,id',
-            'topic' => 'required|string',
-            'text' => 'required|string',
+            'topic' => 'required|string|max:255',
+            'text' => 'required|string|max:20000',
             'alternatives' => 'sometimes|array',
-            'alternatives.*.letter' => 'required_with:alternatives|string',
-            'alternatives.*.text' => 'required_with:alternatives|string',
-            'correct_answer' => 'required|string',
-            'question_type' => 'sometimes|string',
-            'explanation' => 'nullable|string',
-            'source' => 'nullable|string',
+            'alternatives.*.letter' => 'required_with:alternatives|string|max:5',
+            'alternatives.*.text' => 'required_with:alternatives|string|max:20000',
+            'correct_answer' => 'required|string|max:5',
+            'question_type' => 'sometimes|string|max:64',
+            'explanation' => 'nullable|string|max:50000',
+            'source' => 'nullable|string|max:255',
             'tags' => 'sometimes|array',
-            'tags.*' => 'string',
+            'tags.*' => 'string|max:64',
             'notebook_ids' => 'sometimes|array',
             'notebook_ids.*' => 'integer|exists:notebooks,id',
         ]);
@@ -229,8 +234,13 @@ class QuestionController extends Controller
 
         $request->validate([
             '*.subject_id' => 'required|integer|exists:subjects,id',
-            '*.text' => 'required|string',
-            '*.correct_answer' => 'required|string',
+            '*.text' => 'required|string|max:20000',
+            '*.correct_answer' => 'required|string|max:5',
+            '*.topic' => 'nullable|string|max:255',
+            '*.explanation' => 'nullable|string|max:50000',
+            '*.source' => 'nullable|string|max:255',
+            '*.tags' => 'sometimes|array',
+            '*.tags.*' => 'string|max:64',
         ]);
 
         $subjectIds = collect($inputs)->pluck('subject_id')->unique()->values()->all();
@@ -290,6 +300,6 @@ class QuestionController extends Controller
             'total_criadas' => $created,
             'total_ignoradas' => count($errors),
             'errors' => $errors,
-        ], 201);
+        ], ($created > 0 ? 201 : 422));
     }
 }
