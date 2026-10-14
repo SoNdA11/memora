@@ -115,7 +115,8 @@ class QuestionController extends Controller
                 'ease_factor' => 2.5,
                 'interval' => 0,
                 'repetitions' => 0,
-                'next_review' => now()->addDay(),
+                // Due immediately: a new question should be available in "Revisar hoje".
+                'next_review' => now(),
             ]);
 
             if (! empty($data['notebook_ids'])) {
@@ -288,7 +289,8 @@ class QuestionController extends Controller
                     'ease_factor' => 2.5,
                     'interval' => 0,
                     'repetitions' => 0,
-                    'next_review' => now()->addDay(),
+                    // Same as store(): new questions are due immediately.
+                    'next_review' => now(),
                 ]);
                 $created++;
             }

@@ -37,6 +37,43 @@ class QuestionApiTest extends TestCase
         $this->assertDatabaseHas('questions', ['id' => $questionId]);
     }
 
+    public function test_new_question_is_due_today(): void
+    {
+        $subject = Subject::create(['name' => 'Engenharia de Software']);
+
+        $response = $this->postJson('/api/questions', [
+            'subject_id' => $subject->id,
+            'topic' => 'CI/CD',
+            'text' => 'No Deployment Contínuo o deploy é automático?',
+            'correct_answer' => 'C',
+            'question_type' => 'certo_errado',
+        ]);
+
+        $response->assertCreated();
+        $review = Review::where('question_id', $response->json('id'))->firstOrFail();
+        $this->assertTrue(
+            $review->next_review->lessThanOrEqualTo(now()),
+            'Questão nova deve entrar em "Revisar hoje" imediatamente.'
+        );
+    }
+
+    public function test_new_question_appears_in_reviews_today(): void
+    {
+        $subject = Subject::create(['name' => 'Redes']);
+
+        $this->postJson('/api/questions', [
+            'subject_id' => $subject->id,
+            'topic' => 'TCP x UDP',
+            'text' => 'UDP é orientado à conexão?',
+            'correct_answer' => 'E',
+            'question_type' => 'certo_errado',
+        ])->assertCreated();
+
+        $this->getJson('/api/reviews/today')
+            ->assertOk()
+            ->assertJsonPath('0.question.topic', 'TCP x UDP');
+    }
+
     public function test_create_certo_errado_generates_fixed_alternatives(): void
     {
         $subject = Subject::create(['name' => 'Legislação']);
