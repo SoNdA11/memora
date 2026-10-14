@@ -19,6 +19,7 @@ export interface Question {
   alternatives: string
   correct_answer: string
   question_type: string
+  kind: string
   explanation: string
   source: string
   tags: string
@@ -55,6 +56,8 @@ export interface ReviewStats {
   accuracy: number
   today_accuracy: number
   pending_reviews: number
+  pending_questions: number
+  pending_flashcards: number
 }
 
 export interface SubjectStat {

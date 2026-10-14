@@ -137,8 +137,8 @@ export async function fetchReviewLogs(params: {
   return data
 }
 
-export async function fetchTodayReviews(): Promise<Review[]> {
-  const { data } = await api.get('/api/reviews/today')
+export async function fetchTodayReviews(kind?: 'question' | 'flashcard'): Promise<Review[]> {
+  const { data } = await api.get('/api/reviews/today', { params: kind ? { kind } : undefined })
   return data
 }
 

@@ -53,6 +53,7 @@ const navGroups: NavGroup[] = [
     label: 'Estudar',
     links: [
       { to: '/review',   label: 'Revisar Hoje',  icon: BookOpen },
+      { to: '/review/flashcards', label: 'Flashcards', icon: Layers },
       { to: '/questions', label: 'Questões',      icon: List },
       { to: '/phrasal-verbs', label: 'Phrasal Verbs', icon: Languages },
       { to: '/accentuation', label: 'Acentuação', icon: BookMarked },

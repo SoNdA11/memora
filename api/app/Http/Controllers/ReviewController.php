@@ -12,6 +12,12 @@ use Illuminate\Support\Facades\Cache;
 
 class ReviewController extends Controller
 {
+    /**
+     * Kinds válidos de filtro em /reviews/today.
+     * 'question' = questões de prova; 'flashcard' = cards certo/errado gerados.
+     */
+    private const KINDS = ['question', 'flashcard'];
+
     public function today(Request $request): JsonResponse
     {
         $limit = (int) $request->query('limit', 500);
@@ -19,14 +25,24 @@ class ReviewController extends Controller
             $limit = 500;
         }
 
-        // Cacheia a base (até 2000) sob chave única; o limite é aplicado em memória
-        // para não multiplicar chaves nem estourar memória com pendências grandes.
-        $base = Cache::remember('reviews:today:'.now()->format('Y-m-d-H'), 300, function () {
+        $kind = (string) $request->query('kind', '');
+        if ($kind !== '' && ! in_array($kind, self::KINDS, true)) {
+            return response()->json(['error' => 'kind invalido'], 422);
+        }
+
+        // Cacheia a base (até 2000) sob chave única por (hora, kind); o limite é aplicado
+        // em memória para não multiplicar chaves nem estourar memória com pendências grandes.
+        $base = Cache::remember('reviews:today:'.now()->format('Y-m-d-H').':'.$kind, 300, function () use ($kind) {
             $todayEnd = now()->endOfDay();
 
-            return Review::with(['question', 'question.subject', 'question.notebooks'])
-                ->where('next_review', '<=', $todayEnd)
-                ->orderBy('next_review')
+            $query = Review::with(['question', 'question.subject', 'question.notebooks'])
+                ->where('next_review', '<=', $todayEnd);
+
+            if ($kind !== '') {
+                $query->whereHas('question', fn ($q) => $q->where('kind', $kind));
+            }
+
+            return $query->orderBy('next_review')
                 ->limit(2000)
                 ->get();
         });
@@ -70,7 +86,11 @@ class ReviewController extends Controller
             'reviewed_at' => $now,
         ]);
 
-        Cache::forget('reviews:today:'.$now->format('Y-m-d-H'));
+        // A chave de cache de /reviews/today tem sufixo por kind ('', ':question', ':flashcard'),
+        // então é preciso limpar todas as variantes da hora atual.
+        foreach (['', ':question', ':flashcard'] as $kind) {
+            Cache::forget('reviews:today:'.$now->format('Y-m-d-H').$kind);
+        }
         Cache::forget('stats:detailed');
         Cache::forget('stats:heatmap:'.$now->year);
 
@@ -129,13 +149,20 @@ class ReviewController extends Controller
         $correctReviews = ReviewLog::where('correct', true)->count();
         $todayCorrect = ReviewLog::where('reviewed_at', '>=', $todayStart)->where('correct', true)->count();
 
+        $todayEnd = now()->endOfDay();
+        $pending = fn (string $kind) => Review::where('next_review', '<=', $todayEnd)
+            ->whereHas('question', fn ($q) => $q->where('kind', $kind))
+            ->count();
+
         return response()->json([
             'total_questions' => Question::count(),
             'total_reviews' => $totalReviews,
             'today_reviews' => $todayReviews,
             'accuracy' => $totalReviews > 0 ? $correctReviews / $totalReviews * 100 : 0,
             'today_accuracy' => $todayReviews > 0 ? $todayCorrect / $todayReviews * 100 : 0,
-            'pending_reviews' => Review::where('next_review', '<=', now())->count(),
+            'pending_reviews' => Review::where('next_review', '<=', $todayEnd)->count(),
+            'pending_questions' => $pending('question'),
+            'pending_flashcards' => $pending('flashcard'),
         ]);
     }
 

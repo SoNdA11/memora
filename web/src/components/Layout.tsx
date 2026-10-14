@@ -12,6 +12,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/questions/new':   'Nova Questão',
   '/questions/import': 'Importar Questões',
   '/review':          'Revisar Hoje',
+  '/review/flashcards': 'Flashcards',
   '/review/history':  'Histórico',
   '/review/subject':  'Revisar por Matéria',
   '/review/wrong':    'Revisar Erros',

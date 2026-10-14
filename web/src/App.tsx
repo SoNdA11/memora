@@ -33,6 +33,7 @@ const PhrasalVerbs = lazy(() => import('./pages/PhrasalVerbs'))
 const PhrasalStudy = lazy(() => import('./pages/PhrasalStudy'))
 const PhrasalQuiz = lazy(() => import('./pages/PhrasalQuiz'))
 const Accentuation = lazy(() => import('./pages/Accentuation'))
+const ReviewFlashcards = lazy(() => import('./pages/ReviewFlashcards'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,6 +76,7 @@ function AnimatedRoutes() {
               <Route path="/questions/:id/edit" element={<EditQuestion />} />
               <Route path="/questions/import" element={<BulkImport />} />
               <Route path="/review" element={<Review />} />
+              <Route path="/review/flashcards" element={<ReviewFlashcards />} />
               <Route path="/review/history" element={<ReviewHistory />} />
               <Route path="/review/subject" element={<ReviewBySubject />} />
               <Route path="/review/wrong" element={<ReviewWrong />} />

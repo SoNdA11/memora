@@ -12,7 +12,7 @@ class Question extends Model
 {
     protected $fillable = [
         'subject_id', 'topic', 'text', 'alternatives', 'correct_answer',
-        'question_type', 'explanation', 'source', 'tags', 'favorite', 'user_id',
+        'question_type', 'kind', 'explanation', 'source', 'tags', 'favorite', 'user_id',
     ];
 
     protected function casts(): array

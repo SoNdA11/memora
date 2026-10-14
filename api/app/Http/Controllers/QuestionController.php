@@ -40,6 +40,9 @@ class QuestionController extends Controller
         if ($request->query('favorite') === 'true') {
             $query->where('favorite', true);
         }
+        if ($kind = $request->query('kind')) {
+            $query->where('kind', $kind);
+        }
         if ($notebookId = $request->query('notebook_id')) {
             $query->whereIn('id', fn ($q) => $q->select('question_id')->from('question_notebooks')->where('notebook_id', $notebookId));
         }
@@ -80,6 +83,7 @@ class QuestionController extends Controller
             'alternatives.*.text' => 'required_with:alternatives|string|max:20000',
             'correct_answer' => 'required|string|max:5',
             'question_type' => 'sometimes|string|max:64',
+            'kind' => 'sometimes|string|in:question,flashcard',
             'explanation' => 'nullable|string|max:50000',
             'source' => 'nullable|string|max:255',
             'tags' => 'sometimes|array',
@@ -105,6 +109,7 @@ class QuestionController extends Controller
                 'alternatives' => json_encode(array_values($alternatives)),
                 'correct_answer' => $data['correct_answer'],
                 'question_type' => $questionType,
+                'kind' => $data['kind'] ?? 'question',
                 'explanation' => $data['explanation'] ?? null,
                 'source' => $data['source'] ?? null,
                 'tags' => json_encode($data['tags'] ?? []),
@@ -150,6 +155,7 @@ class QuestionController extends Controller
             'alternatives' => 'sometimes|array',
             'correct_answer' => 'sometimes|string',
             'question_type' => 'sometimes|string',
+            'kind' => 'sometimes|string|in:question,flashcard',
             'explanation' => 'sometimes|string|nullable',
             'source' => 'sometimes|string|nullable',
             'tags' => 'sometimes|array',
@@ -158,7 +164,7 @@ class QuestionController extends Controller
         ]);
 
         $updates = [];
-        foreach (['subject_id', 'topic', 'text', 'question_type', 'correct_answer'] as $field) {
+        foreach (['subject_id', 'topic', 'text', 'question_type', 'correct_answer', 'kind'] as $field) {
             if (! empty($data[$field])) {
                 $updates[$field] = $data[$field];
             }
@@ -237,6 +243,7 @@ class QuestionController extends Controller
             '*.subject_id' => 'required|integer|exists:subjects,id',
             '*.text' => 'required|string|max:20000',
             '*.correct_answer' => 'required|string|max:5',
+            '*.kind' => 'nullable|string|in:question,flashcard',
             '*.topic' => 'nullable|string|max:255',
             '*.explanation' => 'nullable|string|max:50000',
             '*.source' => 'nullable|string|max:255',
@@ -280,6 +287,7 @@ class QuestionController extends Controller
                     'alternatives' => json_encode(array_values(is_array($alternatives) ? $alternatives : [])),
                     'correct_answer' => $input['correct_answer'],
                     'question_type' => $qt,
+                    'kind' => $input['kind'] ?? 'question',
                     'explanation' => $input['explanation'] ?? null,
                     'source' => $input['source'] ?? null,
                     'tags' => json_encode($input['tags'] ?? []),

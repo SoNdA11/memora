@@ -57,6 +57,62 @@ class QuestionApiTest extends TestCase
         );
     }
 
+    public function test_reviews_today_separates_questions_from_flashcards(): void
+    {
+        $subject = Subject::create(['name' => 'Engenharia de Software']);
+
+        $this->postJson('/api/questions', [
+            'subject_id' => $subject->id,
+            'topic' => '5.5',
+            'text' => 'No Deployment Contínuo o deploy é automático?',
+            'correct_answer' => 'C',
+            'question_type' => 'certo_errado',
+            'kind' => 'flashcard',
+        ])->assertCreated();
+
+        $this->postJson('/api/questions', [
+            'subject_id' => $subject->id,
+            'topic' => '5.5',
+            'text' => 'Qual a diferença entre Delivery e Deployment?',
+            'correct_answer' => 'A',
+            'alternatives' => [
+                ['letter' => 'A', 'text' => 'O gate manual'],
+                ['letter' => 'B', 'text' => 'Nada'],
+            ],
+            'kind' => 'question',
+        ])->assertCreated();
+
+        $this->getJson('/api/reviews/today?kind=question')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.question.text', 'Qual a diferença entre Delivery e Deployment?');
+
+        $this->getJson('/api/reviews/today?kind=flashcard')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.question.text', 'No Deployment Contínuo o deploy é automático?');
+    }
+
+    public function test_reviews_today_rejects_invalid_kind(): void
+    {
+        $this->getJson('/api/reviews/today?kind=invalido')->assertStatus(422);
+    }
+
+    public function test_new_question_defaults_to_kind_question(): void
+    {
+        $subject = Subject::create(['name' => 'Redes']);
+
+        $response = $this->postJson('/api/questions', [
+            'subject_id' => $subject->id,
+            'topic' => '6',
+            'text' => 'TCP é orientado à conexão?',
+            'correct_answer' => 'C',
+            'question_type' => 'certo_errado',
+        ]);
+
+        $response->assertCreated()->assertJsonPath('kind', 'question');
+    }
+
     public function test_new_question_appears_in_reviews_today(): void
     {
         $subject = Subject::create(['name' => 'Redes']);
