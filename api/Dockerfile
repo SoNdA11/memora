@@ -1,4 +1,7 @@
-FROM php:8.4-cli-alpine
+# Pinned to the first 8.4 patch that fixes CVE-2026-109618 / CVE-2026-109619
+# (php2shell). Do not go back to a floating tag: a stale local image would
+# silently rebuild a vulnerable interpreter.
+FROM php:8.4.27-cli-alpine
 
 RUN apk add --no-cache postgresql-dev postgresql-client $PHPIZE_DEPS linux-headers \
     && docker-php-ext-install pdo_pgsql pgsql bcmath opcache \

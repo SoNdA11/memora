@@ -37,7 +37,7 @@ jobs:
 
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.4.27'
           extensions: pgsql, pdo_pgsql, redis, mbstring, xml
           coverage: none
 
